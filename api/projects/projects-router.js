@@ -1,7 +1,7 @@
 // Write your "projects" router here!
 const express = require("express");
 //
-const { validateProjectId } = require("./projects-middleware");
+const { validateProjectId, validateProject } = require("./projects-middleware");
 //
 const router = express.Router();
 const Projects = require("./projects-model");
@@ -31,21 +31,24 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.put("/:id", (req, res, next) => {
-  const { name, description } = req.body;
-  if (!name || !description) {
-    res.status(400).json({ message: "u need body info" });
-  } else {
-    Projects.update(req.params.id, req.body)
-      .then(() => {
-        return Projects.get(req.params.id);
-      })
-      .then((newPro) => {
-        res.json(newPro);
-      })
-      .catch(next);
+router.put(
+  "/:id",
+  validateProject,
+  validateProjectId,
+  async (req, res, next) => {
+    const { id } = req.params;
+    const projectToUpdate = req.body;
+
+    try {
+      const updatedProject = await Projects.update(id, projectToUpdate);
+      updatedProject
+        ? res.status(200).json(updatedProject)
+        : res.status(500).json({ message: "Update failed, please try again" });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 router.delete("/:id", validateProjectId, async (req, res, next) => {
   const { id } = req.params;
