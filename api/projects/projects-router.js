@@ -16,16 +16,12 @@ router.get("/:id", validateProjectId, (req, res) => {
   res.json(req.project);
 });
 
-router.post("/", async (req, res, next) => {
-  const { name, description } = req.body;
+router.post("/", validateProject, async (req, res, next) => {
+  // const { name, description } = req.body;
   try {
-    if (!name || !description) {
-      res.status(400).json({ message: "needs both name and description" });
-    } else {
-      await Projects.insert(req.body).then((newPro) =>
-        res.status(201).json(newPro)
-      );
-    }
+    await Projects.insert(req.body).then((newPro) =>
+      res.status(201).json(newPro)
+    );
   } catch (err) {
     next(err);
   }
@@ -34,10 +30,13 @@ router.post("/", async (req, res, next) => {
 router.put(
   "/:id",
   validateProject,
+
   validateProjectId,
+
   async (req, res, next) => {
     const { id } = req.params;
     const projectToUpdate = req.body;
+    projectToUpdate ? res.status(200) : res.status(400);
 
     try {
       const updatedProject = await Projects.update(id, projectToUpdate);
@@ -64,12 +63,6 @@ router.delete("/:id", validateProjectId, async (req, res, next) => {
 });
 
 router.get("/:id/actions", validateProjectId, async (req, res, next) => {
-  // const { id } = req.params.id;
-  // Projects.getProjectActions(id)
-  //   .then((projects) => {
-  //     res.json(projects);
-  //   })
-  //   .catch(next);
   try {
     const actions = await Projects.getProjectActions(req.params.id);
     res.json(actions);
